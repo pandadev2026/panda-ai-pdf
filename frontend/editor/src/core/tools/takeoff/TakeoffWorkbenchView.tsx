@@ -13,13 +13,6 @@ import {
 import type { TakeoffAnnotation, TakeoffPoint } from "@app/tools/takeoff/types";
 import { useTakeoffContext } from "@app/tools/takeoff/TakeoffContext";
 
-// Kept for the registerCustomWorkbenchView data contract (see
-// TakeoffWorkbenchRegistration) even though this view now reads everything
-// it needs from TakeoffContext rather than from this prop.
-export interface TakeoffWorkbenchData {
-  file: File;
-}
-
 const CALIBRATION_UNITS = ["m", "cm", "mm", "ft", "in"];
 
 function AnnotationShape({
@@ -105,9 +98,7 @@ function AnnotationShape({
         ? p1
         : { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
     const radius =
-      annotation.type === "radius"
-        ? Math.hypot(p2.x - p1.x, p2.y - p1.y)
-        : Math.hypot(p2.x - p1.x, p2.y - p1.y) / 2;
+      annotation.type === "radius" ? distance(p1, p2) : distance(p1, p2) / 2;
     const stroke = selected ? "var(--c-primary-hover)" : "var(--c-primary)";
     return (
       <g onClick={handleClick} style={{ cursor: "pointer" }}>
@@ -191,7 +182,7 @@ function AnnotationShape({
 // Canvas-only surface: the materials list and the scale/page/zoom toolbar
 // live in the persistent left sidebar (see TakeoffSidebarPanel) so the tool
 // panel no longer has to be hidden while Take Off is active.
-const TakeoffWorkbenchView = (_props: { data: TakeoffWorkbenchData }) => {
+const TakeoffWorkbenchView = () => {
   const { t } = useTranslation();
   const {
     pdfDoc,

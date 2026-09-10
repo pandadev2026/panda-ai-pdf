@@ -113,8 +113,8 @@ export function TextSelectionMenu({
           gap: 6,
           padding: "4px 6px",
           borderRadius: "var(--radius-md, 8px)",
-          background: "var(--c-surface-raised, #fff)",
-          border: "1px solid var(--c-border-subtle, #e5e7eb)",
+          background: "var(--c-surface-raised)",
+          border: "1px solid var(--c-border-subtle)",
           boxShadow: "0 2px 12px rgba(0, 0, 0, 0.25)",
         }}
         onMouseDown={(e) => e.preventDefault()}

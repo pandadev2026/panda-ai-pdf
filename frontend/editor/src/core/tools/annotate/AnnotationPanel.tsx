@@ -102,6 +102,26 @@ type ColorTarget =
   | "shapeFill"
   | null;
 
+// Shape-family tools that have a fill (closed shapes only — lines can't be
+// filled) vs. tools that have a stroke (every shape/line-family tool). A
+// single shared list for each avoids the two drifting out of sync, which
+// previously left lineArrow/polyline out of some stroke-color/opacity UI.
+const SHAPE_FILL_TOOLS: AnnotationToolId[] = [
+  "square",
+  "circle",
+  "polygon",
+  "cloud",
+];
+const SHAPE_STROKE_TOOLS: AnnotationToolId[] = [
+  "square",
+  "circle",
+  "line",
+  "lineArrow",
+  "polyline",
+  "polygon",
+  "cloud",
+];
+
 interface AnnotationPanelProps {
   activeTool: AnnotationToolId;
   activateAnnotationTool: (toolId: AnnotationToolId) => void;
@@ -197,8 +217,6 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
     shapeStrokeColor,
     shapeFillColor,
     shapeOpacity,
-    shapeStrokeOpacity,
-    shapeFillOpacity,
     shapeThickness,
   } = styleState;
 
@@ -508,7 +526,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
             <Group gap="md">
               <Stack gap={4} align="center">
                 <Text size="xs" c="dimmed">
-                  {["square", "circle", "polygon", "cloud"].includes(activeTool)
+                  {SHAPE_STROKE_TOOLS.includes(activeTool)
                     ? t("annotation.strokeColor", "Stroke Color")
                     : t("annotation.color", "Color")}
                 </Text>
@@ -525,13 +543,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
                             ? strikeoutColor
                             : activeTool === "squiggly"
                               ? squigglyColor
-                              : [
-                                    "square",
-                                    "circle",
-                                    "line",
-                                    "polygon",
-                                    "cloud",
-                                  ].includes(activeTool)
+                              : SHAPE_STROKE_TOOLS.includes(activeTool)
                                 ? shapeStrokeColor
                                 : textColor
                   }
@@ -549,13 +561,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
                               ? "strikeout"
                               : activeTool === "squiggly"
                                 ? "squiggly"
-                                : [
-                                      "square",
-                                      "circle",
-                                      "line",
-                                      "polygon",
-                                      "cloud",
-                                    ].includes(activeTool)
+                                : SHAPE_STROKE_TOOLS.includes(activeTool)
                                   ? "shapeStroke"
                                   : "text";
                     setColorPickerTarget(target);
@@ -563,9 +569,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
                   }}
                 />
               </Stack>
-              {["square", "circle", "polygon", "cloud"].includes(
-                activeTool,
-              ) && (
+              {SHAPE_FILL_TOOLS.includes(activeTool) && (
                 <Stack gap={4} align="center">
                   <Text size="xs" c="dimmed">
                     {t("annotation.fillColor", "Fill Color")}
@@ -794,9 +798,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               </Box>
             )}
 
-            {["square", "circle", "line", "polygon", "cloud"].includes(
-              activeTool,
-            ) && (
+            {SHAPE_STROKE_TOOLS.includes(activeTool) && (
               <>
                 <Box>
                   <Text size="xs" c="dimmed" mb={4}>
@@ -884,18 +886,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               ? strikeoutOpacity
               : colorPickerTarget === "squiggly"
                 ? squigglyOpacity
-                : colorPickerTarget === "shapeStroke"
-                  ? shapeStrokeOpacity
-                  : colorPickerTarget === "shapeFill"
-                    ? shapeFillOpacity
-                    : 100
-      }
-      opacityLabel={
-        colorPickerTarget === "shapeStroke"
-          ? t("annotation.strokeOpacity", "Stroke Opacity")
-          : colorPickerTarget === "shapeFill"
-            ? t("annotation.fillOpacity", "Fill Opacity")
-            : undefined
+                : 100
       }
       onOpacityChange={(opacity) => {
         if (colorPickerTarget === "highlight") {
@@ -963,35 +954,10 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               },
             );
           }
-        } else if (colorPickerTarget === "shapeStroke") {
-          setShapeStrokeOpacity(opacity);
-          const shapeToolsList = [
-            "square",
-            "circle",
-            "polygon",
-            "cloud",
-          ] as AnnotationToolId[];
-          if (shapeToolsList.includes(activeTool)) {
-            annotationApiRef?.current?.setAnnotationStyle?.(
-              activeTool,
-              buildToolOptions(activeTool),
-            );
-          }
-        } else if (colorPickerTarget === "shapeFill") {
-          setShapeFillOpacity(opacity);
-          const fillShapeTools = [
-            "square",
-            "circle",
-            "polygon",
-            "cloud",
-          ] as AnnotationToolId[];
-          if (fillShapeTools.includes(activeTool)) {
-            annotationApiRef?.current?.setAnnotationStyle?.(
-              activeTool,
-              buildToolOptions(activeTool),
-            );
-          }
         }
+        // shapeStroke/shapeFill opacity is set via the always-visible Slider
+        // in defaultStyleControls, not this modal — showOpacity is false for
+        // those targets, so onOpacityChange never fires with them.
       }}
       onColorChange={(color) => {
         if (colorPickerTarget === "ink") {
@@ -1135,25 +1101,9 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
           }
         }
 
-        const shapeToolsList = [
-          "square",
-          "circle",
-          "line",
-          "lineArrow",
-          "polyline",
-          "polygon",
-          "cloud",
-        ] as AnnotationToolId[];
-        const fillShapeTools = [
-          "square",
-          "circle",
-          "polygon",
-          "cloud",
-        ] as AnnotationToolId[];
-
         if (colorPickerTarget === "shapeStroke") {
           setShapeStrokeColor(color);
-          const styleTool = shapeToolsList.includes(activeTool)
+          const styleTool = SHAPE_STROKE_TOOLS.includes(activeTool)
             ? activeTool
             : null;
           if (styleTool) {
@@ -1176,7 +1126,7 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
         }
         if (colorPickerTarget === "shapeFill") {
           setShapeFillColor(color);
-          const styleTool = fillShapeTools.includes(activeTool)
+          const styleTool = SHAPE_FILL_TOOLS.includes(activeTool)
             ? activeTool
             : null;
           if (styleTool) {

@@ -158,3 +158,11 @@ export function downloadJsonAsFile(data: any, filename: string): void {
   const content = JSON.stringify(data, null, 2);
   downloadTextAsFile(content, filename, "application/json");
 }
+
+/** Wraps a CSV field in quotes and escapes embedded quotes if it needs it. */
+export function csvField(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}

@@ -47,7 +47,7 @@ export function formatAnnotationDate(obj: PdfAnnotationObject): string {
 }
 
 /** Placeholder authors we never show; use current user's name from context instead. */
-const PLACEHOLDER_AUTHORS = new Set(["Guest", "Digital Signature", ""]);
+export const PLACEHOLDER_AUTHORS = new Set(["Guest", "Digital Signature", ""]);
 export function getAuthorName(
   obj: Pick<PdfAnnotationObject, "author">,
   currentDisplayName: string,

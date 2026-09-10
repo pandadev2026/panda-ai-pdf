@@ -21,15 +21,7 @@ import {
   estimateArchitecturalRatio,
   useTakeoffContext,
 } from "@app/tools/takeoff/TakeoffContext";
-import { downloadTextAsFile } from "@app/utils/downloadUtils";
-
-/** Wraps a CSV field in quotes and escapes embedded quotes if it needs it. */
-function csvField(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
+import { csvField, downloadTextAsFile } from "@app/utils/downloadUtils";
 
 // Take Off's sidebar panel: the scale/page/zoom toolbar, the materials list
 // (each row arms its own length/area/count tool), and the running total.

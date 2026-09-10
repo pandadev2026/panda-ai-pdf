@@ -19,7 +19,7 @@ import {
   AnnotationTypeIcon,
   locateAnnotationOnPage,
 } from "@app/components/viewer/annotationDisplayUtils";
-import { downloadTextAsFile } from "@app/utils/downloadUtils";
+import { csvField, downloadTextAsFile } from "@app/utils/downloadUtils";
 
 interface MarkupsListSidebarProps {
   documentId: string;
@@ -30,14 +30,6 @@ interface MarkupsListSidebarProps {
 interface MarkupRow {
   pageIndex: number;
   ann: PdfAnnotationObject;
-}
-
-/** Wraps a CSV field in quotes and escapes embedded quotes if it needs it. */
-function csvField(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
 }
 
 export function MarkupsListSidebar({

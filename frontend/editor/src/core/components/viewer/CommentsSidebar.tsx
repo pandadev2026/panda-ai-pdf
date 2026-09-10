@@ -42,6 +42,7 @@ import {
   getAnnotationTypeLabel,
   AnnotationTypeIcon,
   locateAnnotationOnPage,
+  PLACEHOLDER_AUTHORS,
 } from "@app/components/viewer/annotationDisplayUtils";
 
 /** PDF subtypes that are inherently standalone comment annotations (not linked to other annotations). */
@@ -102,9 +103,6 @@ function getCommentDisplayContent(entry: {
     return String(firstReply).trim();
   return "";
 }
-
-/** Placeholder authors we never show; use current user's name from context instead. */
-const PLACEHOLDER_AUTHORS = new Set(["Guest", "Digital Signature", ""]);
 
 /** Replies store an explicit author; only allow edit when it matches the current comment author name. */
 function isReplyAuthoredByCurrentUser(
