@@ -426,11 +426,22 @@ export function TakeoffProvider({ children }: { children: ReactNode }) {
       (a) => !(a.materialId === materialId && a.type !== tool),
     );
     setAnnotations(nextAnnotations);
-    if (!nextAnnotations.some((a) => a.materialId === materialId)) {
-      setMaterials((prev) =>
-        prev.map((m) => (m.id === materialId ? { ...m, quantity: 0 } : m)),
-      );
-    }
+    setMaterials((prev) => {
+      // Retyping away from 'area' invalidates this material as a deduction
+      // target — clear any other material's now-stale reference to it, the
+      // same cleanup removeMaterial already does when a material is deleted.
+      const cleared =
+        tool === "area"
+          ? prev
+          : prev.map((m) =>
+              m.deductsFromMaterialId === materialId
+                ? { ...m, deductsFromMaterialId: undefined }
+                : m,
+            );
+      return !nextAnnotations.some((a) => a.materialId === materialId)
+        ? cleared.map((m) => (m.id === materialId ? { ...m, quantity: 0 } : m))
+        : cleared;
+    });
     setArmedMaterialId(materialId);
     setArmedTool(tool);
   }
