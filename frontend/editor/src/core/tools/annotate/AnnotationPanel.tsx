@@ -280,6 +280,11 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
         label: t("annotation.freehandHighlighter", "Freehand Highlighter"),
         icon: "brush",
       },
+      {
+        id: "eraser",
+        label: t("annotation.eraser", "Eraser"),
+        icon: "ink-eraser-outline-rounded",
+      },
     ];
 
   const shapeTools: { id: AnnotationToolId; label: string; icon: string }[] = [
@@ -425,6 +430,18 @@ export function AnnotationPanel(props: AnnotationPanelProps) {
               {t(
                 "annotation.editSelectDescription",
                 "Click an existing annotation to edit its color, opacity, text, or size.",
+              )}
+            </Text>
+          </>
+        ) : activeTool === "eraser" ? (
+          <>
+            <Text size="sm" fw={600}>
+              {t("annotation.eraserSettings", "Eraser")}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {t(
+                "annotation.eraserDescription",
+                "Click any annotation to delete it.",
               )}
             </Text>
           </>

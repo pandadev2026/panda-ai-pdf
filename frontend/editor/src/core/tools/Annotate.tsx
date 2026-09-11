@@ -698,6 +698,34 @@ const Annotate = (_props: BaseToolProps) => {
       setTextAlignment,
     });
 
+  // Eraser isn't a real drawing tool — it rides the library's own select
+  // mode (see LIBRARY_TOOL_ID in AnnotationAPIBridge) so clicking an
+  // annotation still selects it the normal way; this just intercepts that
+  // selection and deletes it immediately instead of opening the edit panel.
+  useEffect(() => {
+    if (activeTool !== "eraser" || !selectedAnn) return;
+    const pageIndex: number =
+      selectedAnn.pageIndex ?? selectedAnn.object?.pageIndex ?? 0;
+    const annotationId: string =
+      selectedAnn.id ??
+      selectedAnn.object?.id ??
+      selectedAnn.uid ??
+      selectedAnn.object?.uid ??
+      "";
+    if (annotationId) {
+      annotationApiRef?.current?.deleteAnnotation?.(pageIndex, annotationId);
+    }
+    annotationApiRef?.current?.deselectAnnotation?.();
+    setSelectedAnn(null);
+    setSelectedAnnId(null);
+  }, [
+    activeTool,
+    selectedAnn,
+    annotationApiRef,
+    setSelectedAnn,
+    setSelectedAnnId,
+  ]);
+
   const resetAnnotationInteractionState = useCallback(() => {
     const annotationApi = annotationApiRef.current;
 

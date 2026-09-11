@@ -272,6 +272,7 @@ export function useAnnotationSelection({
       if (
         matchingTool &&
         activeToolRef.current !== "select" &&
+        activeToolRef.current !== "eraser" &&
         !stayOnPlacement
       ) {
         activeToolRef.current = "select";

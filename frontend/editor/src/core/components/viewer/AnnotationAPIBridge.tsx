@@ -209,12 +209,18 @@ const buildInkDefaults = (
 // distinct id (for UI state and for customData.toolId on the created
 // annotation) — only the actual activateTool/setToolDefaults calls need to
 // target the library's "polygon" id.
+// Eraser isn't a real interaction tool either — it reuses the library's
+// select mode (clicking an annotation selects it) so Annotate.tsx can watch
+// for that selection and delete it immediately instead of opening the edit
+// panel. See the "select" -> null mapping below in configureAnnotationTool.
 const LIBRARY_TOOL_ID: Partial<Record<AnnotationToolId, AnnotationToolId>> = {
   cloud: "polygon",
+  eraser: "select",
 };
 
 const TOOL_DEFAULT_BUILDERS: Record<AnnotationToolId, ToolDefaultsBuilder> = {
   select: () => null,
+  eraser: () => null,
   highlight: (options) => {
     const colorValue = options?.color ?? DEFAULTS.highlight;
     return {

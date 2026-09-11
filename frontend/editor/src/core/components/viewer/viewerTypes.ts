@@ -119,6 +119,7 @@ export interface HistoryAPI {
 
 export type AnnotationToolId =
   | "select"
+  | "eraser"
   | "highlight"
   | "underline"
   | "strikeout"
