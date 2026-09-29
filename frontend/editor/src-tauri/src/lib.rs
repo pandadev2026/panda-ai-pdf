@@ -37,6 +37,7 @@ use commands::{
     print_pdf_file_native,
     set_update_mode,
     start_backend,
+    start_print_inbox_watcher,
     start_oauth_login,
     can_install_updates,
     check_for_update,
@@ -180,6 +181,12 @@ pub fn run() {
       if let Err(err) = apply_provisioning_if_present(&app.handle()) {
         add_log(format!("⚠️ Failed to apply provisioning file: {}", err));
       }
+
+      // Windows only (no-op elsewhere): watch the folder where the user saves
+      // "Microsoft Print to PDF" output and auto-open new PDFs. See
+      // windows/virtual-printer/README.md for why this exists instead of a
+      // registered virtual printer.
+      start_print_inbox_watcher(app.handle().clone());
 
       // Start backend immediately, non-blocking
       let app_handle = app.handle().clone();

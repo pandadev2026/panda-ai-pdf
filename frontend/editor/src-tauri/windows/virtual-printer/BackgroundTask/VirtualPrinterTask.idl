@@ -1,0 +1,20 @@
+// PHASE 1 SCAFFOLD — UNBUILT, UNTESTED.
+//
+// Minimal IDL declaring the WinRT runtime class that AppxManifest.xml's
+// EntryPoint="Tasks.VirtualPrinterTask" resolves to. This is the piece a
+// Visual Studio "Windows Runtime Component (C++/WinRT)" project normally
+// generates scaffolding for; it was hand-written here to describe the
+// intended shape, not verified by the MIDL compiler.
+//
+// Recommended path (see ../../README.md): create a fresh VS project from
+// that template and paste VirtualPrinterTask.h/.cpp's logic in rather than
+// trying to make this exact .idl/.vcxproj pair build as-is.
+
+namespace Tasks
+{
+    [default_interface]
+    runtimeclass VirtualPrinterTask : Windows.ApplicationModel.Background.IBackgroundTask
+    {
+        VirtualPrinterTask();
+    }
+}

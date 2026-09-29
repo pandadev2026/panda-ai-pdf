@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PHASE 1 — CONFIRMED BUILDING on a real Windows 11 box via plain
+  `MSBuild.exe VirtualPrinterTask.vcxproj /p:Configuration=Release
+  /p:Platform=x64` (no Visual Studio GUI needed, contrary to what an
+  earlier version of this comment assumed). Produces a working
+  VirtualPrinterTask.dll + Tasks.winmd. Required `nuget.exe install
+  Microsoft.Windows.CppWinRT -OutputDirectory ..\packages` first — see
+  CppWinRTPackageDir below and ../README.md for the exact version pinned
+  and the full reproduction steps.
+
+  Getting here took 4 real fixes (wrong PCH setup, UWP-app properties that
+  don't belong on a component DLL, wrong generated-header name, wrong base
+  class) — see ../README.md "Bugs found by building this" for specifics if
+  you're modifying this file and something breaks again.
+
+  The DLL itself is not yet known to be useful: it packages and installs
+  fine, but the printer it's supposed to back never registers on the test
+  machine (unrelated to this file — see ../README.md).
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="NuGetPackageVersions">
+    <!-- Filled in after `nuget install Microsoft.Windows.CppWinRT` on the
+         build machine; the exact version isn't knowable ahead of time from
+         this macOS scaffold, hence the indirection instead of a hardcoded
+         path below. -->
+    <CppWinRTPackageDir Condition="'$(CppWinRTPackageDir)'==''">..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\</CppWinRTPackageDir>
+  </PropertyGroup>
+
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.props')" />
+  </ImportGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6A6B0B6D-6B0B-4B0B-9B0B-6B0B6B0B6B0B}</ProjectGuid>
+    <RootNamespace>VirtualPrinterTask</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <!-- AppContainerApplication/ApplicationType/ApplicationTypeRevision
+         deliberately omitted: those mark a UWP *app* project (and pull in
+         the XAML compiler, which then fails with MSB4181 since there's no
+         XAML here). This is a plain WinRT Component DLL, not an app. -->
+    <CppWinRTOptimized>true</CppWinRTOptimized>
+    <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <CppWinRTGenerateWindowsMetadata>true</CppWinRTGenerateWindowsMetadata>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <!-- WinRT components are C++20; the ConvertPdlAsync/co_await usage in
+         VirtualPrinterTask.cpp needs coroutine support. -->
+    <LanguageStandard>stdcpp20</LanguageStandard>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <Midl Include="VirtualPrinterTask.idl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="VirtualPrinterTask.h" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="VirtualPrinterTask.cpp" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.targets')" />
+  </ImportGroup>
+
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references the Microsoft.Windows.CppWinRT NuGet package, which is missing on this machine. Run `nuget install Microsoft.Windows.CppWinRT -OutputDirectory ..\packages` from this folder (or the equivalent restore) and, if the resolved version differs from CppWinRTPackageDir above, update that property to match. Missing file: {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(CppWinRTPackageDir)build\native\Microsoft.Windows.CppWinRT.targets'))" />
+  </Target>
+</Project>

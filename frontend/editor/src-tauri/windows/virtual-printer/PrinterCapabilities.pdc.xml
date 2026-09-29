@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PHASE 1 SCAFFOLD — UNBUILT, UNTESTED.
+
+  Minimal Print Device Capabilities (PDC) document for the "Stirling PDF"
+  virtual printer. This is deliberately bare (letter/A4, portrait/landscape,
+  color/monochrome, 1-sided) — just enough for the printer to install and
+  show up with a sane options dialog. Not tuned for real use; revisit once
+  Phase 1 is confirmed working.
+
+  Schema reference (PWG5100.13 / MS PDC extensions):
+    https://learn.microsoft.com/en-us/windows-hardware/drivers/print/pdc-and-pdl-support-for-3d-printing
+    (general PDC format — the print-support-app-v4 doc references this file
+    format by name but doesn't inline a full schema; this was assembled from
+    the standard PWG Semantic Model PDC shape used by other PSA samples, not
+    copied from a verified working sample. Validate against `makeappx` /
+    the print system's own validation on install.)
+-->
+<psf:PrintCapabilities
+    xmlns:psf="http://schemas.microsoft.com/windows/2013/05/printing/printschemaframework"
+    xmlns:psk="http://schemas.microsoft.com/windows/2013/05/printing/printschemakeywords">
+
+  <psf:Feature name="psk:PageMediaSize">
+    <psf:Property name="psf:SelectionType">
+      <psf:Value xsi:type="xsd:QName" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">psk:PickOne</psf:Value>
+    </psf:Property>
+    <psf:Option name="psk:NorthAmericaLetter" />
+    <psf:Option name="psk:ISOA4" />
+  </psf:Feature>
+
+  <psf:Feature name="psk:PageOrientation">
+    <psf:Property name="psf:SelectionType">
+      <psf:Value xsi:type="xsd:QName" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">psk:PickOne</psf:Value>
+    </psf:Property>
+    <psf:Option name="psk:Portrait" />
+    <psf:Option name="psk:Landscape" />
+  </psf:Feature>
+
+  <psf:Feature name="psk:JobColorSpace">
+    <psf:Property name="psf:SelectionType">
+      <psf:Value xsi:type="xsd:QName" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">psk:PickOne</psf:Value>
+    </psf:Property>
+    <psf:Option name="psk:Color" />
+    <psf:Option name="psk:Monochrome" />
+  </psf:Feature>
+
+  <psf:Feature name="psk:JobDuplexAllDocumentsContiguously">
+    <psf:Property name="psf:SelectionType">
+      <psf:Value xsi:type="xsd:QName" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">psk:PickOne</psf:Value>
+    </psf:Property>
+    <psf:Option name="psk:OneSided" />
+  </psf:Feature>
+
+</psf:PrintCapabilities>

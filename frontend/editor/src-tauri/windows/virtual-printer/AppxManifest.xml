@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  PHASE 1 SPIKE — BUILDS, PACKAGES, SIGNS, AND INSTALLS CLEANLY ON A REAL
+  WINDOWS 11 BOX (build 10.0.26200). THE PRINTER STILL DOESN'T APPEAR.
+
+  Confirmed on real hardware: `Add-AppxPackage` succeeds and
+  `Get-AppxPackage` shows this installed, but `Get-Printer` never lists
+  "Stirling PDF" afterward. The install log warns that the
+  printsupport2 namespace below is "inapplicable" and gets ignored by
+  Windows' AppX deployment engine on this machine — the extension XML
+  survives intact in the installed manifest (checked via
+  Get-AppxPackageManifest), but whatever Deployment Extension Handler is
+  supposed to act on it never runs (confirmed via PrintService event logs:
+  zero events during install). Root cause not yet found — see
+  ../README.md "What actually happened" for the full trail and what to
+  check next before changing this file further.
+
+  Docs this is grounded in:
+    https://learn.microsoft.com/en-us/windows-hardware/drivers/devapps/msix-manifest-specification-print-support-virtual-printer
+    https://learn.microsoft.com/en-us/windows-hardware/drivers/devapps/print-support-app-v4-design-guide
+
+  This package's ONLY job in Phase 1 is to register a "Stirling PDF" entry
+  in the Windows printer list and prove that printing to it produces a PDF
+  at a hardcoded temp path. It is intentionally NOT wired into the real
+  Stirling-PDF.exe yet (that's Phase 2, itself blocked on the above).
+-->
+<Package
+    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:printsupport2="http://schemas.microsoft.com/appx/manifest/printsupport2/windows10"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    IgnorableNamespaces="uap printsupport2 rescap">
+
+  <Identity
+      Name="StirlingPDFInc.StirlingPDFVirtualPrinter"
+      Publisher="CN=Stirling PDF Inc."
+      Version="0.1.0.0" />
+  <!--
+    Publisher above MUST exactly match the Subject of whatever cert signs
+    this package (self-signed test cert for sideload testing; the real
+    Authenticode cert referenced by bundle.windows.certificateThumbprint in
+    ../../tauri.conf.json for a real release). makeappx/signtool will fail
+    loudly if these don't match — that's expected and not a bug in this file.
+  -->
+
+  <Properties>
+    <DisplayName>Stirling PDF Virtual Printer</DisplayName>
+    <PublisherDisplayName>Stirling PDF Inc.</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <!-- TODO(phase-1): point at a real 50x50 PNG before packaging; any
+         placeholder works for local sideload testing. -->
+  </Properties>
+
+  <Dependencies>
+    <!-- Virtual Printer Architecture requires Windows 10 1809+ (build 17763). -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="StirlingPdfPrinterHost" Executable="PlaceholderHost.exe" EntryPoint="Windows.FullTrustApplication">
+      <!--
+        TODO(phase-1): "PlaceholderHost.exe" does not exist yet. The
+        printSupportVirtualPrinterWorkflow extension below is what actually
+        matters for Phase 1 — the print system invokes the background task
+        out-of-process via the PSA broker, not this Application entry
+        directly. A trivial stub EXE (or, once this package is no longer
+        standalone, the real Stirling-PDF.exe) needs to sit here so the
+        package is installable. See README.md.
+      -->
+      <uap:VisualElements
+          DisplayName="Stirling PDF"
+          Description="Virtual printer that routes print jobs into Stirling PDF"
+          BackgroundColor="transparent"
+          Square150x150Logo="Assets\Square150x150Logo.png"
+          Square44x44Logo="Assets\Square44x44Logo.png" />
+
+      <Extensions>
+        <!-- Registers the "Stirling PDF" print queue itself. -->
+        <printsupport2:Extension
+            Category="windows.printSupportVirtualPrinterWorkflow"
+            EntryPoint="Tasks.VirtualPrinterTask">
+          <printsupport2:PrintSupportVirtualPrinter
+              DisplayName="Stirling PDF"
+              PrinterUri="stirlingpdf-vp:print-to-stirling"
+              PreferredInputFormat="application/oxps"
+              PdcFile="PrinterCapabilities.pdc.xml">
+            <!--
+              No OutputFileTypes on purpose: with it set, Windows pops its
+              own Save-As dialog and hands the background task a
+              user-chosen target file. We want the background task to own
+              the output location (a Stirling-PDF-managed folder) so it can
+              auto-launch the app afterward (Phase 2) instead of making the
+              user pick a save path. Confirm this omission actually
+              suppresses the Save-As dialog when testing on Windows — the
+              docs describe the flag's presence, not explicitly the
+              absence-behavior, so verify rather than trust this comment.
+            -->
+            <printsupport2:SupportedFormats>
+              <printsupport2:SupportedFormat Type="application/pdf" MaxVersion="1.7" />
+            </printsupport2:SupportedFormats>
+          </printsupport2:PrintSupportVirtualPrinter>
+        </printsupport2:Extension>
+
+        <!--
+          An earlier version of this file had an explicit
+          `Extension Category="windows.activatableClass.inProcessServer"`
+          block here, guessing that Tasks.VirtualPrinterTask needed manual
+          in-process-server registration to resolve the EntryPoint above.
+          makeappx rejected it: that Category isn't in the schema's allowed
+          enum for this Extensions scope (valid values are
+          windows.backgroundTasks / windows.preInstalledConfigTask /
+          windows.updateTask / windows.restrictedLaunch). Matches Microsoft's
+          own PSA v4 sample manifest, which has no such block either — the
+          package's own embedded WinMD (Tasks.winmd, produced by the
+          cppwinrt/MIDL build and packed alongside VirtualPrinterTask.dll)
+          is what resolves the EntryPoint class, not a manifest Extension.
+          Confirmed by actually building and packaging this, not by reading
+          docs harder.
+        -->
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+</Package>
