@@ -525,9 +525,10 @@ jobs:
 
           # Find and rename artifacts based on platform
           if [ "${{ matrix.platform }}" = "windows-latest" ]; then
-            # Only ship the MSI installer. The loose exe and WiX toolset exes
-            # are not the user-facing installer - the MSI contains the signed inner exe.
+            # Ship both the MSI and the NSIS setup.exe so a plain .exe installer
+            # is available (the MSI holds the signed inner exe).
             find . -name "*.msi" -exec cp {} "$DIST/Stirling-PDF-${{ matrix.name }}.msi" \;
+            find . -name "*-setup.exe" -exec cp {} "$DIST/Stirling-PDF-${{ matrix.name }}-setup.exe" \;
           elif [ "${{ matrix.platform }}" = "windows-11-arm" ]; then
             # arm64 ships the NSIS installer (WiX MSI has no arm64 support in Tauri).
             find . -name "*-setup.exe" -exec cp {} "$DIST/Stirling-PDF-${{ matrix.name }}-setup.exe" \;
