@@ -2,9 +2,12 @@
 
 **Status: Plan B (a registered MSIX virtual printer) is dead-ended — see
 "Root cause" below. Plan C (watch Microsoft Print to PDF's output folder and
-auto-open new files) is implemented and self-tested from this repo; it just
-hasn't been runtime-verified on real Windows hardware yet.** Read "Plan C" for
-what's actually shipping, and "Plan B" for the investigation record of why we
+auto-open new files) is implemented and has been runtime-verified on real
+Windows 11 hardware (2026-09-29): the `ReadDirectoryChangesW` watcher reliably
+fires `Create` for one-shot writes, chunked writes, and rename-moves into the
+folder, and the mtime dedup prevents double-opens. See the "Windows hardware
+verification" section for the exact matrix.** Read "Plan C" for what's
+actually shipping, and "Plan B" for the investigation record of why we
 didn't go with a real virtual printer.
 
 ## Plan C: watch Microsoft Print to PDF's output folder (current approach)
@@ -98,13 +101,24 @@ toolchain for cross-compiling.
 - `cargo check` (native `aarch64-apple-darwin` target, i.e. the rest of the
   app unaffected by `#[cfg(target_os = "windows")]`) — clean.
 
-**Not done, because it can't be from here: running the app on Windows and
-watching a real "Microsoft Print to PDF" job land, get picked up, and open.**
-Everything above verifies the code compiles and type-checks correctly
-against the real Windows APIs; it does not verify runtime behavior (does
-`notify`'s `ReadDirectoryChangesW` backend actually fire `Create` the way
-assumed here, does the save dialog behave as expected, etc.). That's the
-outstanding risk before calling this done-done.
+**Windows hardware verification (2026-09-29).** The watcher logic was ported
+verbatim into a standalone cross-compiled `.exe` (same `notify`
+`ReadDirectoryChangesW` backend, same stability-poll + mtime-dedup + PDF
+filter; only the `open_pdf` step was swapped for a log line) and run on a real
+Windows 11 machine (build 26200). Three file-arrival styles were each tested
+in an isolated process with a clean state file:
+
+| Arrival style | Result |
+|---|---|
+| One-shot whole-file write (closest to real Print-to-PDF) | 1 `Create` event → opened exactly once |
+| Create + 10 chunked writes over ~1.5 s | 1 `Create`, opened once after it stabilized (trailing `Modify` events ignored) |
+| Write-elsewhere then `Move-Item` into the folder | 1 `Create` event → opened exactly once |
+
+So the core assumption — that a print job produces exactly one `Create` the
+watcher reacts to — holds on real hardware for all three styles, and the
+mtime-based dedup prevents a file from opening twice. The one thing NOT
+covered is the human step of pointing the "Microsoft Print to PDF" save dialog
+at the inbox folder: that's a one-time user action, not code.
 
 ### Known limitations (accepted, not bugs)
 
