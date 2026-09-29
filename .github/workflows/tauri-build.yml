@@ -82,7 +82,10 @@ jobs:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           PLATFORM: ${{ inputs.platform }}
         run: |
-          WINDOWS='{"platform":"windows-latest","args":"--target x86_64-pc-windows-msvc","name":"windows-x86_64","jpdfium_platforms":"windows-x64"}'
+          # x86_64 builds BOTH the MSI (default per tauri.conf.json bundle.targets)
+          # and the NSIS setup.exe (opt-in via --bundles) so a classic single-file
+          # .exe installer is available, not just the MSI.
+          WINDOWS='{"platform":"windows-latest","args":"--target x86_64-pc-windows-msvc --bundles nsis,msi","name":"windows-x86_64","jpdfium_platforms":"windows-x64"}'
           # ARM64: NSIS only (WiX MSI has no arm64 support in Tauri) and no JPDFium
           # natives yet - flip jpdfium_platforms to windows-arm64 once JPDFium ships it.
           WINDOWS_ARM64='{"platform":"windows-11-arm","args":"--target aarch64-pc-windows-msvc --bundles nsis","name":"windows-arm64","jpdfium_platforms":"none"}'
